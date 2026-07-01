@@ -129,33 +129,54 @@ for municipio, (id_municip, latitude, longitude) in municipios.items():
         "temperature_2m_min"
         "&timezone=America/Sao_Paulo"
     )
+    espera = 2  # segundos
+    # Processa os dados com tentativas em caso de erro (ex: limite da API atingido)
+    while True:
 
-    try:
+        try:
 
-        resposta = requests.get(url, timeout=60)
-        resposta.raise_for_status()
-        dados = resposta.json()
+            resposta = requests.get(url, timeout=60)
 
-        df_temp = pd.DataFrame({
-            "data": pd.to_datetime(dados["daily"]["time"]),
-            "id_municipio": id_municip,
-            "municipio": municipio,
-            "chuva_mm": dados["daily"]["precipitation_sum"],
-            "horas_chuva": dados["daily"]["precipitation_hours"],
-            "temp_media": dados["daily"]["temperature_2m_mean"],
-            "temp_max": dados["daily"]["temperature_2m_max"],
-            "temp_min": dados["daily"]["temperature_2m_min"]
-        })
+            # Se deu certo, sai do loop
+            resposta.raise_for_status()
 
-        frames.append(df_temp)
+            dados = resposta.json()
 
-        print(f"{len(df_temp)} registros")
+            df_temp = pd.DataFrame({
+                "data": pd.to_datetime(dados["daily"]["time"]),
+                "id_municipio": id_municip,
+                "municipio": municipio,
+                "chuva_mm": dados["daily"]["precipitation_sum"],
+                "horas_chuva": dados["daily"]["precipitation_hours"],
+                "temp_media": dados["daily"]["temperature_2m_mean"],
+                "temp_max": dados["daily"]["temperature_2m_max"],
+                "temp_min": dados["daily"]["temperature_2m_min"],
+            })
 
-    except Exception as erro:
-        print(f"Erro em {municipio}")
-        print(erro)
+            frames.append(df_temp)
 
-    sleep(1)
+            print(f"{len(df_temp)} registros")
+
+            break
+
+        except requests.exceptions.HTTPError as erro:
+
+            if erro.response.status_code == 429:
+
+                espera = min(espera * 2, 60)  # 2 → 4 → 8 → 16 → 32 → 60 segundos
+
+                print(f"Limite da API atingido.")
+                print(f"Tentando novamente em {espera} segundos...")
+
+                sleep(espera)
+                continue
+            else:
+                print(f"Erro em {municipio}: {erro}")
+                break
+
+        except Exception as erro:
+            print(f"Erro em {municipio}: {erro}")
+            break
 
 # =========================
 # JUNTA TODOS OS DADOS
