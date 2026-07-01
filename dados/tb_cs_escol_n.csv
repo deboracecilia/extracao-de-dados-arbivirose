@@ -1,0 +1,12 @@
+﻿CS_ESCOL_N,Escolaridade
+0,Analfabeto
+1,1° a 4° incompleto
+2,1° a 4° completo
+3,5° a 8° incompleto
+4,Ensino fundamental completo
+5,Ensino médio incompleto
+6,Ensino médio completo
+7,Ensino superio incompleto
+8,Ensino superior completo
+9,Pós Graduado
+10,Não se aplica
