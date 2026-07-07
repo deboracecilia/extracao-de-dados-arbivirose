@@ -1,0 +1,5 @@
+pandas
+requests
+pymysql
+sqlalchemy
+openpyxl
